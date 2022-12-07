@@ -1,0 +1,4 @@
+# Ignore credentials
+*.yaml
+*.config
+*.txt
