@@ -24,6 +24,7 @@ def bump(search_string, command_type):
 
         spotify.playback_queue_add(tracks.items[0].uri, device_id=available_device.id)
         spotify.playback_next() 
+        #TODO: This needs to be fixed to move the queued song to be the next avaible song before advancing to it
 
         return 0, None
 
