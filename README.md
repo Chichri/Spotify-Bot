@@ -6,7 +6,7 @@ The basic idea is to scrape emails from an email account and parse commands from
 passed to this script which makes the according API requests via tekore. Emails are filtered from a whitelist, 
 and can be identified as regular or super users with according command permissions. 
 
-This script requires a registered spotify application and a gmail account with IMAP ennabled and an application 
+This script requires a registered spotify application and a gmail account with IMAP enabled and an application 
 password set. More info on those things bellow.
 
 This script was written for a college dorm situation where people had already been directing the dorm speakers 
@@ -50,11 +50,11 @@ You'll then see in your `creds.config` the added line
 
 ### Email Account Configuration
 
-I would recomend making a new gmail account for your bot to avoid spamming any accounts you actually use.
+I would recommend making a new gmail account for your bot to avoid spamming any accounts you actually use.
 
-Once you do that, enable IMAP on the email account. It'll in the settings page under the Fowarding and POP/IMAP tab. 
+Once you do that, enable IMAP on the email account. It'll in the settings page under the "Forwarding and POP/IMAP" tab. 
 
-Next, you'll need to the management page for the google account the email is under and navigatei to the Security page.
+Next, you'll need to the management page for the google account the email is under and navigating to the Security page.
 There in the "Signing Into Google" block, hit app passwords. It'll ask you sign in again / complete some two-step stuff 
 if you have that enabled. Do that, and finally you'll come to a page where you can generate the app password. Select 
 "Mail" as the application and "Other (Custom name)" as the device, since we won't be using anything on the provided 
@@ -84,25 +84,25 @@ and
 
 ## Use 
 
-The core functionailty of script is scraping two strings out of the email. The first is fed to the search functionality of the
+The core functionality of script is scraping two strings out of the email. The first is fed to the search functionality of the
 spotify API, and returns the song/album id of whats being searched for the script to play. The second acts as a flag for script
-to either search specifcally for a track, or an album.
+to either search specifically for a track, or an album.
 
 Regular users can queue a track every three minutes, and queue an album once per day. Super users can do what regular users can 
 do, but can also use the "priority" command which inserts whatever track has been searched into the queue in the next position, 
-and then immediatly skips to play it. 
+and then immediately skips to play it. 
 
 If everything in setup went accordingly, the script should be ready to use. Fire up a spotify session and play a couple seconds
 of a song to make sure it's really "active" for the script to use. 
 
 The script can be started by running `python main.py`. By default, this will trigger the email listening functionality wherein 
-any new emails will be processed for vaild commands and fed to the script. If you just want to lest it locally, open up main.py 
+any new emails will be processed for valid commands and fed to the script. If you just want to lest it locally, open up main.py 
 and uncomment the line invoking the "local" function. Running it again will cause a continuous prompt in the terminal for the
 search_string and the command type. 
 
 ### Credits
 
-This script was largely based on / stiched together from code by magician11 and bnsreenu, who's tutorials on tekore 
+This script was largely based on / stitched together from code by magician11 and bnsreenu, who's tutorials on tekore 
 and email scraping with python were the first ones that I stumbled across in throwing this together.
 
 [Tekore Tutorial](https://www.youtube.com/watch?v=8OGpz0UeYp4)
