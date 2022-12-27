@@ -3,7 +3,6 @@ import queue
 import time
 import threading
 
-    
 buffer = queue.Queue()
 
 def main(): 
@@ -26,4 +25,3 @@ def flush():
 x = threading.Thread(target=flush)
 x.start()
 main()
-
