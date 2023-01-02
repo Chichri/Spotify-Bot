@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+from bump import bump
+from read_emails import listen
+import time
+import os
+from read_emails import user, read_emails, manual_input
+
+# To generate the tui 
+def menu():
+
+    header()
+
+    print("\nBump Bot. Queue songs on Spotify by email. By Chichri\n")
+
+    command_list()
+    # Prints out initial command list
+    while True:
+
+        dec = input('> ')
+
+        dec = dec.rstrip()
+
+        if dec == '1':
+            os.system('clear')
+            print("listening on account: " + user + '... (Ctrl C or close window to quit') 
+            read_emails()
+        elif dec == '2': 
+            manual_input() 
+        elif dec == 'quit':
+            break
+        else:
+            print("I'm sorry, I didn't recognize that command.")
+
+# TODO: Make main do email functionality and create a "local" function 
+# for interacting with the script via the terminal (like how I have it now)
+
+
+# Eh maybe change this. 
+def header():
+    print()
+    print(' /$$$$$$$  /$$   /$$ /$$      /$$ /$$$$$$$        /$$$$$$$   /$$$$$$  /$$$$$$$$ ')
+    print('| $$__  $$| $$  | $$| $$$    /$$$| $$__  $$      | $$__  $$ /$$__  $$|__  $$__/')
+    print('| $$  \ $$| $$  | $$| $$$$  /$$$$| $$  \ $$      | $$  \ $$| $$  \ $$   | $$   ')
+    print('| $$$$$$$ | $$  | $$| $$ $$/$$ $$| $$$$$$$/      | $$$$$$$ | $$  | $$   | $$   ')
+    print('| $$__  $$| $$  | $$| $$  $$$| $$| $$____/       | $$__  $$| $$  | $$   | $$   ')
+    print('| $$  \ $$| $$  | $$| $$\  $ | $$| $$            | $$  \ $$| $$  | $$   | $$   ')
+    print('| $$$$$$$/|  $$$$$$/| $$ \/  | $$| $$            | $$$$$$$/|  $$$$$$/   | $$   ')
+    print('|_______/  \______/ |__/     |__/|__/            |_______/  \______/    |__/ ')
+
+def command_list():
+    print("""
+    [\033[32m1\033[0m] : Start The Bot
+    [\033[32m2\033[0m] : Manual Input
+   quit : close the program
+    """) 
+
+menu()

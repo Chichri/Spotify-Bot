@@ -1,9 +1,11 @@
 import tekore as tk
+import os 
 
-CONFIG_FILE = 'creds.config'
+path = os.path.dirname(os.path.abspath(__file__))
+
+CONFIG_FILE = path + '/creds.config'
 client_id, client_secret, redirect_uri = tk.config_from_file(CONFIG_FILE)
 conf = (client_id, client_secret, redirect_uri)
 
 token = tk.prompt_for_user_token(*conf, scope=tk.scope.every)
 tk.config_to_file(CONFIG_FILE, conf + (token.refresh_token,))
-

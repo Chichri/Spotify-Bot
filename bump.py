@@ -52,16 +52,15 @@ def prioritize(priority_uri):
                 time.sleep(.5) 
                 spotify.playback_queue_add(currently_playing_uri, device_id=available_device.id)
 
-def bump(search_string, command_type): 
-
+def bump(search_string, command_type, perms): 
     #For queueing a song in the regular fashion
     if command_type == 'track' or command_type == 'priority-track':
 
         tracks, = spotify.search(query=search_string, limit=NUM_ITEMS)
-        print(f' Queueing "{search_string}" on {available_device.name} ({available_device.type})')
+        # print(f' Queueing "{search_string}" on {available_device.name} ({available_device.type})')
         spotify.playback_queue_add(tracks.items[0].uri, device_id=available_device.id)
 
-        if command_type == "priority-track":
+        if command_type == "priority-track" and perms == 0:
             priority_uri = tracks.items[0].uri 
             prioritize(priority_uri)
 
@@ -71,13 +70,13 @@ def bump(search_string, command_type):
     elif command_type == 'album' or command_type == 'priority-album':
 
         album, = spotify.search(query=search_string,types=('album',),limit=NUM_ITEMS)
-        print(f'About to queue "{search_string}" on {available_device.name} ({available_device.type})')
+        # print(f'About to queue "{search_string}" on {available_device.name} ({available_device.type})')
 
         tracks = spotify.album_tracks(album.items[0].id)
         for item in tracks.items: 
             spotify.playback_queue_add(item.uri, device_id=available_device.id)
 
-        if command_type == 'priority-album':
+        if command_type == 'priority-album' and perms == 0:
             priority_uri = tracks.items[0].uri 
             prioritize(priority_uri)
 
@@ -87,7 +86,7 @@ def bump(search_string, command_type):
     #For queueing a playlist
     elif command_type == 'playlist' or command_type == 'priority-playlist':
 
-        print(f'About to queue "{search_string}" on {available_device.name} ({available_device.type})')
+        # print(f'About to queue "{search_string}" on {available_device.name} ({available_device.type})')
         user = spotify.current_user()
         #Get list of all playlists and find searched playlist
         playlists = spotify.playlists(user.id) 
@@ -98,7 +97,7 @@ def bump(search_string, command_type):
                 for playlist_track in playlist_items.items: 
                     spotify.playback_queue_add(playlist_track.track.uri)
 
-                if command_type == 'priority-playlist': 
+                if command_type == 'priority-playlist' and perms == 0: 
                     priority_uri = playlist_items.items[0].track.uri
                     prioritize(priority_uri)
 
@@ -106,6 +105,17 @@ def bump(search_string, command_type):
 
         print("Playlist not found: please be exact in the name")
         return 1
+
+    elif command_type == 'pause' and perms == 0: 
+
+        # spotify.playback_resume(available_device)
+        spotify.playback_pause()
+
+    elif command_type == 'play' and perms == 0: 
+
+        # spotify.playback_resume(available_device)
+        spotify.playback_resume()
+
 
 
     else:

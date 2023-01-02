@@ -3,15 +3,15 @@
 A python script for controlling spotify via email, utilizing the imaplib and tekore modules.
 
 The basic idea is to scrape emails from an email account and parse commands from text, which are subsequently 
-passed to this script which makes the according API requests via tekore. Emails are filtered from a whitelist, 
-and can be identified as regular or super users with according command permissions. 
+passed to this script which makes the according API requests via tekore. Emails addresses can be identified as
+regular or super users with according command permissions. 
 
 This script requires a registered spotify application and a gmail account with IMAP enabled and an application 
 password set. More info on those things bellow.
 
 This script was written for a college dorm situation where people had already been directing the dorm speakers 
-over an email chain, but the process had yet to be automated. It's not intended as a rigorous media solution for 
-larger or smaller applications, but with an intermediate understanding of python it can be scaled accordingly. 
+over email, but the process had yet to be automated. It's not intended as a rigorous media solution for larger
+or smaller applications, but with an intermediate understanding of python it can be scaled accordingly. 
 
 ## Setup
 
@@ -52,15 +52,16 @@ You'll then see in your `creds.config` the added line
 
 I would recommend making a new gmail account for your bot to avoid spamming any accounts you actually use.
 
-Once you do that, enable IMAP on the email account. It'll in the settings page under the "Forwarding and POP/IMAP" tab. 
+Then enable IMAP on the email account. It'll in the settings page under the "Forwarding and POP/IMAP" tab. 
 
-Next, you'll need to the management page for the google account the email is under and navigating to the Security page.
-There in the "Signing Into Google" block, hit app passwords. It'll ask you sign in again / complete some two-step stuff 
-if you have that enabled. Do that, and finally you'll come to a page where you can generate the app password. Select 
-"Mail" as the application and "Other (Custom name)" as the device, since we won't be using anything on the provided 
-list. Name the password and click "Generate".
+Next, you'll need to go to the management page for the google account the email is under and navigate to the
+Security page. There in the "Signing Into Google" block, hit app passwords. It'll ask you sign in again and 
+complete some two-step stuff if you have that enabled. Do that, and finally you'll come to a page where you 
+can generate the app password. Select "Mail" as the application and "Other (Custom name)" as the device, 
+since we won't be using anything on the provided list. Name the password and click "Generate".
 
-This will produce a page with the app password displayed. Copy it, and do not lose it because you're not seeing it again. 
+This will produce a page with the app password displayed. Copy it, and do not lose it because you're not 
+seeing it again. 
 
 Create a file called 'config.yaml' and add the following lines: 
 
@@ -69,7 +70,8 @@ user: "gmail-account-here"
 password: "app-passowrd-here"
 ```
 
-where "gmail-account-here" is replaced with the gmail account, and "app-password-here" is replaced with the app password.
+where "gmail-account-here" is replaced with the gmail account, and "app-password-here" is replaced with the 
+app password.
 
 ### Install IMAP4 and Tekore
 
@@ -82,28 +84,115 @@ and
 [Tekore docs](https://tekore.readthedocs.io/en/stable/index.html)
 [imaplib docs](https://docs.python.org/3/library/imaplib.html)
 
+## Setting Up Users
+
+Make two files call 'users.txt' and 'superusers.txt' respectively. When someone emails the bot, their address
+will be checked against the contents these files to see if they have permissions to submit commands. If the 
+address is not found within either file, it will be unable to submit any commands. 
+
+When filling out these files with addresses, each line should have only a single address on it. Addresses 
+should be spelled correctly and with the proper casing. Addresses should not have a trailing space or any
+other extraneous characters like commas at the end of them. 
+
 ## Use 
 
-The core functionality of script is scraping two strings out of the email. The first is fed to the search functionality of the
-spotify API, and returns the song/album id of whats being searched for the script to play. The second acts as a flag for script
-to either search specifically for a track, or an album.
+You can start the script by running: 
 
-Regular users can queue a track every three minutes, and queue an album once per day. Super users can do what regular users can 
-do, but can also use the "priority" command which inserts whatever track has been searched into the queue in the next position, 
-and then immediately skips to play it. 
+```
+python bump-bot
+``` 
+In the cloned repository folder. Alternatively, the bump-bot script is an executable with a shebang, so if 
+the shebang works with your machine and add this folder to your $PATH, you'll be able to run bump-bot as a 
+command on the terminal anywhere. 
 
-If everything in setup went accordingly, the script should be ready to use. Fire up a spotify session and play a couple seconds
-of a song to make sure it's really "active" for the script to use. 
+Starting the script prompts you with a simple tui with two options.
+```
+    [1] : Start The Bot
+    [2] : Manual Input
+   quit : close the program
+```
 
-The script can be started by running `python main.py`. By default, this will trigger the email listening functionality wherein 
-any new emails will be processed for valid commands and fed to the script. If you just want to lest it locally, open up main.py 
-and uncomment the line invoking the "local" function. Running it again will cause a continuous prompt in the terminal for the
-search_string and the command type. 
+The first option will activate the bot, meaning that any emails with valid commands within the account will 
+be read and parsed along with all incoming emails while the bot is active. To drop out out of this state, Ctrl-c 
+will bring you back to the tui command line. The second will be explained further in this section. 
+
+This script uses a very simple user/superuser system to determine how people can interact with the bot.
+Regular users can queue a track every three minutes, and queue an album or a playlist once per hour. Super 
+users can do what regular users can do, but can also use the "priority" version of each command which inserts
+whatever track, album,or playlist has been searched into the queue in the next position, and then immediately 
+skips to play it while rebuilding the queue that came before it so as not to lose songs that have been queued
+in the meantime. Superusers can also pause and play the current playback.
+
+Now, here's some generic examples of the valid commands that you would send via email: 
+
+```
+bump track;
+
+bump:a album; 
+
+bump:p playlist;
+```
+A line is recognized as a command once the string "bump" is parsed by the script. The script then checks for
+a 'suffix' on the bump consisting of a semicolon and a character which determines the type of the thing the
+bot is about to search for. Whatever comes after the space separating the bump and the rest of the command is
+the string that is fed to the spotify search API, specifically searching for only things that match what ever
+the suffix was. The command is then terminated by a semicolon. A command cannot contain line breaks or else 
+it will not be recognized (which means it all has to be on the same line in the email).
+
+The top-most line is the standard bump command which queues a single track. This command doesn't have the 
+"suffix" that serves as the first string flag mentioned above because it'll probably be the most common. 
+'track' in this case replaces the search string, which is what spotify will look for to queue. 
+
+The second line is an example of a command that queues an album. This command carries the suffix "a", and 
+'album' in this case replaces the search string, which is what spotify will look for to queue. 
+
+The third line is an example of a command that queues a playlist (searched from the user account). This 
+command carries the suffix "p", and 'playlist' in this case replaces the search string, which is what spotify 
+will look for to queue. 
+
+
+```
+bump:pt track;
+bump:pa album; 
+bump:pp playlist;
+```
+
+So each of these commands would do exactly what their regular counterparts do, but then shuffle around the
+queue so whatever they added gets played immediately instead of whatever came before it.
+
+Finally, the superuser commands for starting and stopping playback are: 
+ 
+```
+bump:play;
+bump:pause; 
+```
+
+These commands only have a suffix since there's nothing to search for. 
+
+---Manual Input---
+
+Manual Input is activated with the 2nd option in the tui. It's useful primarily for debugging if you want to 
+toy around with the script and interact with the bot locally instead sending an email every time you want to 
+test something. Activating it will bring up a repeating two part prompt which will ask for the 'search string' 
+(name of the song, album, or playlist to be searched for), and the 'command type', which is what the suffixes 
+are from the email commands above. Entering the suffix for the corresponding command type is done without the 
+semicolon present in the email commands (for a track, just enter nothing). You can return to the tui command 
+line by entering 'quit' as the command type or by hitting Ctrl-c. 
+
+---
+
+If everything in setup went accordingly, the script should be ready to use. Fire up a spotify session and play 
+a couple seconds of a song to make sure it's really "active" for the script to use. 
+
+The script can be started by running `python bump-bot`. By default, this will trigger the email listening 
+functionality wherein any new emails will be processed for valid commands and fed to the script. If you just 
+want to lest it locally, open up main.py and uncomment the line invoking the "local" function. Running it 
+again will cause a continuous prompt in the terminal for the search_string and the command type. 
 
 ### Credits
 
-This script was largely based on / stitched together from code by magician11 and bnsreenu, who's tutorials on tekore 
-and email scraping with python were the first ones that I stumbled across in throwing this together.
+This script was largely based on / stitched together from code by magician11 and bnsreenu, who's tutorials on
+tekore and email scraping with python were the first ones that I stumbled across in throwing this together.
 
 [Tekore Tutorial](https://www.youtube.com/watch?v=8OGpz0UeYp4)
 [Email Tutorial](https://www.youtube.com/watch?v=K21BSZPFIjQ)
