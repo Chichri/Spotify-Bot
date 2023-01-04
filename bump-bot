@@ -36,6 +36,7 @@ def menu():
 
 
 # Eh maybe change this. 
+# credit to patorjk for his acsii test generator
 def header():
     print()
     print(' /$$$$$$$  /$$   /$$ /$$      /$$ /$$$$$$$        /$$$$$$$   /$$$$$$  /$$$$$$$$ ')

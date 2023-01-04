@@ -3,10 +3,10 @@ import imaplib
 import yaml
 import time
 import os
-import sys
 import queue
 import threading
 from bump import bump
+from timer import Timer
 
 path = os.path.dirname(os.path.abspath(__file__))
 
@@ -15,6 +15,19 @@ buffer = queue.Queue()
 # read credentials for gmail account 
 with open(path + "/config.yaml") as f_obj:
     content = f_obj.read() 
+
+
+userdic = {}
+with open(path + '/users.txt') as f_obj:
+    useraddrs = f_obj.read().splitlines()
+    for useradd in useraddrs: 
+        userdic[useradd] = {'track_time': None, 'album_time': None}
+
+
+# This line makes the timer object used for check cool downs. The last two parameters are the time values
+# for tracks and albums/playlists respectively. If you want to change the cooldown times, change these values
+# to match your desired time in seconds
+t = Timer(userdic, 180, 3600)
 
 creds = yaml.load(content, Loader=yaml.FullLoader) # making a yaml object with the proper credentials 
 user, pswd = creds["user"], creds["password"] # Extacting the credentials into variables
@@ -54,9 +67,9 @@ def filter(body):
 # to see which level of user they are. This is done by returning 0 for superusers, 1 for users, and 
 # 2 for unrecognized addresses
 def whitelist(address):
-    with open("users.txt") as f_obj:
+    with open(path + "/users.txt") as f_obj:
         userlines = f_obj.read().splitlines() 
-    with open("superusers.txt") as f_obj:
+    with open(path + "/superusers.txt") as f_obj:
         superuserlines = f_obj.read().splitlines()
     if address in superuserlines: 
         return 0
@@ -67,6 +80,8 @@ def whitelist(address):
 
 # listen is where the email magic happens. Using the imaplib module, we connect to the account, read new emails, and parse them
 def listen(): 
+
+    t.check_time()
 
     my_mail = imaplib.IMAP4_SSL(imap_url)
     my_mail.login(user, pswd)
@@ -93,6 +108,11 @@ def listen():
                 # Scraping the address to compare against the whitelist / permissions level
                 address = line[(f+1):e]
                 perms = whitelist(address)
+
+                # Getting the timer state of basic users (non-super users) 
+                if perms == 1: 
+                    track_time, album_time = t.return_timers(address)
+
                 # This conditional stops unrecognized users from submitting commands
                 if perms == 2: 
                     print("Unregistered address: " + address + " attempted to submit a command")
@@ -101,6 +121,31 @@ def listen():
                 for part in my_msg.walk():  
                     if part.get_content_type() == 'text/plain': 
                         command_type, search_string = filter(part.get_payload())
+                       
+                        # If it's a basic user, we have to check for and set cooldown times    
+                        if perms == 1:
+                            if command_type == 'track':
+                                if track_time != None:
+                                    print(address + " is still on a track cooldown.") 
+                                    continue
+                                else: 
+                                    buffer.put((search_string, command_type, perms))
+                                    print('bumping: ' + search_string + ', ' + 'command type: ' + command_type + ', perms: ' + str(perms) + ', by :' + address)  
+                                    t.start_track_timer(address)
+                                    continue
+
+                            elif (command_type == 'album' or command_type == 'playlist'):
+                                if album_time != None: 
+                                    print(address + " is still on an album/playlist cooldown.") 
+                                    continue 
+                                else:
+                                    buffer.put((search_string, command_type, perms))
+                                    print('bumping: ' + search_string + ', ' + 'command type: ' + command_type + ', perms: ' + str(perms) + ', by :' + address)  
+                                    t.start_album_timer(address)
+                                    continue
+
+
+                        # And if its a superusers, just queue the command in the buffer with no cooldown checks 
                         buffer.put((search_string, command_type, perms))
                         print('bumping: ' + search_string + ', ' + 'command type: ' + command_type + ', perms: ' + str(perms) + ', by :' + address)  
 
@@ -161,7 +206,3 @@ def read_emails():
             x.join()
             flush_flag = True
             break
-
-
-# while 1:
-    # listen() 
