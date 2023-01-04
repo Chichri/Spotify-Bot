@@ -113,7 +113,7 @@ Starting the script prompts you with a simple tui with two options.
 ```
 
 The first option will activate the bot, meaning that any emails with valid commands within the account will 
-be read and parsed along with all incoming emails while the bot is active. To drop out out of this state, Ctrl-c 
+be read and parsed along with all incoming emails while the bot is active. To drop out out of this, Ctrl-c 
 will bring you back to the tui command line. The second will be explained further in this section. 
 
 This script uses a very simple user/superuser system to determine how people can interact with the bot.
@@ -121,7 +121,7 @@ Regular users can queue a track every three minutes, and queue an album or a pla
 users can do what regular users can do, but can also use the "priority" version of each command which inserts
 whatever track, album,or playlist has been searched into the queue in the next position, and then immediately 
 skips to play it while rebuilding the queue that came before it so as not to lose songs that have been queued
-in the meantime. Superusers can also pause and play the current playback.
+in the meantime. Superusers can also pause and play the current playback, as well as adjust the volume.
 
 Now, here's some generic examples of the valid commands that you would send via email: 
 
@@ -160,14 +160,17 @@ bump:pp playlist;
 So each of these commands would do exactly what their regular counterparts do, but then shuffle around the
 queue so whatever they added gets played immediately instead of whatever came before it.
 
-Finally, the superuser commands for starting and stopping playback are: 
+Finally, the superuser commands for playing, pausing, and adjusting the volume of the playback are: 
  
 ```
 bump:play;
 bump:pause; 
+bump:v volume;
 ```
 
-These commands only have a suffix since there's nothing to search for. 
+The pause and play commands only have a suffix since there's nothing to search for. The volume command uses 
+what would have been the search string as the value for volume. This value has to be a number ranging from 0
+to 100 in representation of the percentage of the volume thats active.
 
 ---Manual Input---
 

@@ -15,38 +15,33 @@ def menu():
     command_list()
     # Prints out initial command list
     while True:
+        try: 
+            dec = input('> ')
 
-        dec = input('> ')
+            dec = dec.rstrip()
 
-        dec = dec.rstrip()
-
-        if dec == '1':
-            os.system('clear')
-            print("listening on account: " + user + '... (Ctrl C or close window to quit') 
-            read_emails()
-        elif dec == '2': 
-            manual_input() 
-        elif dec == 'quit':
+            if dec == '1':
+                os.system('clear')
+                print("listening on account: " + user + '... (Ctrl C or close window to quit') 
+                read_emails()
+            elif dec == '2': 
+                manual_input() 
+            elif dec == 'quit':
+                break
+            else:
+                print("I'm sorry, I didn't recognize that command.")
+        except KeyboardInterrupt: 
             break
-        else:
-            print("I'm sorry, I didn't recognize that command.")
 
-# TODO: Make main do email functionality and create a "local" function 
-# for interacting with the script via the terminal (like how I have it now)
-
-
-# Eh maybe change this. 
-# credit to patorjk for his acsii test generator
+# credit to patorjk for his acsii text generator
 def header():
     print()
-    print(' /$$$$$$$  /$$   /$$ /$$      /$$ /$$$$$$$        /$$$$$$$   /$$$$$$  /$$$$$$$$ ')
-    print('| $$__  $$| $$  | $$| $$$    /$$$| $$__  $$      | $$__  $$ /$$__  $$|__  $$__/')
-    print('| $$  \ $$| $$  | $$| $$$$  /$$$$| $$  \ $$      | $$  \ $$| $$  \ $$   | $$   ')
-    print('| $$$$$$$ | $$  | $$| $$ $$/$$ $$| $$$$$$$/      | $$$$$$$ | $$  | $$   | $$   ')
-    print('| $$__  $$| $$  | $$| $$  $$$| $$| $$____/       | $$__  $$| $$  | $$   | $$   ')
-    print('| $$  \ $$| $$  | $$| $$\  $ | $$| $$            | $$  \ $$| $$  | $$   | $$   ')
-    print('| $$$$$$$/|  $$$$$$/| $$ \/  | $$| $$            | $$$$$$$/|  $$$$$$/   | $$   ')
-    print('|_______/  \______/ |__/     |__/|__/            |_______/  \______/    |__/ ')
+    print(' ██████╗ ██╗   ██╗███╗   ███╗██████╗     ██████╗  ██████╗ ████████╗')
+    print(' ██╔══██╗██║   ██║████╗ ████║██╔══██╗    ██╔══██╗██╔═══██╗╚══██╔══╝')
+    print(' ██████╔╝██║   ██║██╔████╔██║██████╔╝    ██████╔╝██║   ██║   ██║   ')
+    print(' ██╔══██╗██║   ██║██║╚██╔╝██║██╔═══╝     ██╔══██╗██║   ██║   ██║   ')
+    print(' ██████╔╝╚██████╔╝██║ ╚═╝ ██║██║         ██████╔╝╚██████╔╝   ██║   ')
+    print(' ╚═════╝  ╚═════╝ ╚═╝     ╚═╝╚═╝         ╚═════╝  ╚═════╝    ╚═╝   ')
 
 def command_list():
     print("""

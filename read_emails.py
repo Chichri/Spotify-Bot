@@ -53,6 +53,8 @@ def filter(body):
                     return 'album', search_string
                 elif bump[-1] == 'p': 
                     return 'playlist', search_string
+                elif bump[-1] == 'v': 
+                    return 'volume', search_string
             elif len(bump) == 7: 
                 if bump[-1] == 't': 
                     return 'priority-track', search_string
@@ -166,6 +168,20 @@ def manual():
         search_string = input("search_string:\n")
         command_type = input("command_type:\n") 
         perms = 0
+        if command_type == '': 
+            command_type = 'track'
+        if command_type == 'a': 
+            command_type = 'album'
+        if command_type == 'p':
+            command_type = 'playlist'
+        if command_type == 'v':
+            command_type = 'volume'
+        if command_type == 'pt': 
+            command_type = 'priority-track' 
+        if command_type == 'pa': 
+            command_type = 'priority-album' 
+        if command_type == 'pp': 
+            command_type = 'priority-playlist'
         if command_type == 'quit': 
             raise KeyboardInterrupt
         buffer.put((search_string, command_type, perms))

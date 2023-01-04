@@ -32,24 +32,29 @@ available_device = get_first_available_device(spotify)
 # more unwieldy then what I went with. 
 
 # The solution I came up with was to just queue the song, and then fast-forward through the queue until I reached 
-# the desired track. As I skipped a song, I would requeue it to preserve the queue in the same order until the 
+# the desired track. As I skipped a song, I would re-queue it to preserve the queue in the same order until the 
 # desired track started playing. The same technique is used for priority-queuing albums and playlists
-# TODO: Tune up this function to see if it cannot be a bit faster
+
+# It get's the job done, but until I come up with a more sophisticated solution, I'd recommend just manipulating the
+# queue through the application itself if you really wanna play things before other things, because with this method
+# there's a decent bit of silence as the volume gets turned down so it can cycle through all the songs without hearing bits
+# and blurbs. 
+
 def prioritize(priority_uri): 
+
+        spotify.playback_volume(0) 
         
         currently_playing_uri = spotify.playback_currently_playing().item.uri
-        # The sleep calls are so that the loop cannot "miss" the song with the  frequency of api requests, something
-        # that tended to happen when they weren't there
+        # The sleep call is so that the loop cannot timeout the api with the frequency of requests, which happened a 
+        # couple times in testing
         while True:
-            time.sleep(.5) 
             spotify.playback_next()
-            time.sleep(.5) 
+            time.sleep(1) 
             currently_playing_uri = spotify.playback_currently_playing().item.uri
-            time.sleep(.5) 
             if currently_playing_uri == priority_uri: 
+                spotify.playback_volume(100) 
                 break 
             else: 
-                time.sleep(.5) 
                 spotify.playback_queue_add(currently_playing_uri, device_id=available_device.id)
 
 def bump(search_string, command_type, perms): 
@@ -108,15 +113,21 @@ def bump(search_string, command_type, perms):
 
     elif command_type == 'pause' and perms == 0: 
 
-        # spotify.playback_resume(available_device)
         spotify.playback_pause()
 
     elif command_type == 'play' and perms == 0: 
 
-        # spotify.playback_resume(available_device)
         spotify.playback_resume()
 
+    elif command_type == 'volume' and perms == 0: 
 
+        try: 
+            if int(search_string)< 0 or int(search_string) > 100: 
+                print('Volume set must be in range of 0, 100') 
+            else: 
+                spotify.playback_volume(int(search_string))
+        except ValueError: 
+            print("Must submit a number for volume")
 
     else:
         print("Submit a valid command")
