@@ -12,34 +12,6 @@ spotify = tk.Spotify(token)
 #  Find the first available device
 available_device = get_first_available_device(spotify)
 
-# Spotify by default makes (at least in my opinion) kind of weird choices when it comes to 
-# queueing albums and playlists. When you queue an album and then queue something while the 
-# album is playing, the subsequently queued track gets inserted as the next item in the queue
-# instead of after all of the items in the album or playlist. I prefer it when these things are 
-# treated as continuous items since you tend to listen to them in sequence, so when queueing collections 
-# of tracks, instead of actually queueing the album or playlist, it iterates through the tracks 
-# and queues them individually and in order so that new tracks get queued in sequence after the 
-# collection
-
-# This function is my solution to playing things "immediately" in the queue. Spotify has an endpoint 
-# to just switch the playback to any track, but doing so wipes out the queue. If you have a queue built up, 
-# but wanted to play a track immediately without destroying the queue, its actually kind of tricky. There's 
-# no endpoint for reordering the queue (even though that is functionality that exists in the gui) and the 
-# endpoint for getting the contents of the queue is essentially non-functional (it usually only returns like
-# two of the most upcoming queued songs, and that's only sometimes), which means you cannot easily just grab 
-# whats in the queue, start a playback, and then rebuild the queue from what you had. It's certainly doable if 
-# you were keeping track of which songs had been queued, but not yet played in the script, but that seemed 
-# more unwieldy then what I went with. 
-
-# The solution I came up with was to just queue the song, and then fast-forward through the queue until I reached 
-# the desired track. As I skipped a song, I would re-queue it to preserve the queue in the same order until the 
-# desired track started playing. The same technique is used for priority-queuing albums and playlists
-
-# It get's the job done, but until I come up with a more sophisticated solution, I'd recommend just manipulating the
-# queue through the application itself if you really wanna play things before other things, because with this method
-# there's a decent bit of silence as the volume gets turned down so it can cycle through all the songs without hearing bits
-# and blurbs. 
-
 def prioritize(priority_uri): 
 
         spotify.playback_volume(0) 
@@ -57,17 +29,38 @@ def prioritize(priority_uri):
             else: 
                 spotify.playback_queue_add(currently_playing_uri, device_id=available_device.id)
 
+# Second approach to playing a song before others in the queue. Currently messes up the gui. 
+def new_prioritize(priority_id): 
+
+    requeue = []
+
+    for fulltrack in spotify.playback_queue().queue: 
+        requeue.append(fulltrack.uri)
+    time.sleep(1)
+    spotify.playback_start_tracks(priority_id, device_id=available_device.id) 
+    time.sleep(1)
+    for uri in requeue:
+        time.sleep(1)
+        spotify.playback_queue_add(uri, device_id=available_device.id)
+
 def bump(search_string, command_type, perms): 
     #For queueing a song in the regular fashion
     if command_type == 'track' or command_type == 'priority-track':
 
         tracks, = spotify.search(query=search_string, limit=NUM_ITEMS)
-        # print(f' Queueing "{search_string}" on {available_device.name} ({available_device.type})')
+
         spotify.playback_queue_add(tracks.items[0].uri, device_id=available_device.id)
 
         if command_type == "priority-track" and perms == 0:
             priority_uri = tracks.items[0].uri 
             prioritize(priority_uri)
+
+        # The experimental new priority method - commented for now
+        # if command_type == "priority-track" and perms == 0:
+            # priority_id = tracks.items[0].id 
+            # new_prioritize([priority_id])
+        # else: 
+            # spotify.playback_queue_add(tracks.items[0].uri, device_id=available_device.id)
 
         return 0
 
@@ -132,4 +125,37 @@ def bump(search_string, command_type, perms):
     else:
         print("Submit a valid command")
 
+## Context About This Code ## 
 
+# Spotify by default makes (at least in my opinion) kind of weird choices when it comes to 
+# queueing albums and playlists. When you queue an album and then queue something while the 
+# album is playing, the subsequently queued track gets inserted as the next item in the queue
+# instead of after all of the items in the album or playlist. I prefer it when these things are 
+# treated as continuous items since you tend to listen to them in sequence, so when queueing collections 
+# of tracks, instead of actually queueing the album or playlist, it iterates through the tracks 
+# and queues them individually and in order so that new tracks get queued in sequence after the 
+# collection
+
+## About the two priority functions ## 
+
+# Spotify has an endpoint to just switch the playback to any track, but doing so wipes out the queue. If 
+# you have a queue built up, but wanted to play a track immediately without destroying the queue, its 
+# actually kind of tricky. There's no endpoint for reordering the queue (even though that is functionality 
+# that exists in the gui), so you cannot queue the song you want to play now and then move it forward. 
+
+# I ended up writing two functions to try to implement this functionality. The first solution I came up with was 
+# to just queue the song, and then fast-forward through the queue until I reached the desired track. As I skipped 
+# a song, I would re-queue it to preserve the queue in the same order until the desired track started playing. The
+# same technique was used for priority-queuing albums and playlists. This worked, but resulted in a decent period of
+# silence since sleep calls needed to be made during the shuffling to avoid timing out the api. 
+
+# Then I figured out how getting the contents of the queue worked and wrote a tighter function that grabbed the 
+# contents of the queue, immediately played the desired track with the queue-destroying endpoint, and then rebuilt
+# the queue from its history. However, this function *still* needed sleep calls to not invoke a 503, and it seems to
+# stun the application. The queue page in the spotify application become a blank page and trying to queue other stuff 
+# through the api gets a 503. This gets cleared up by playing something else like a playlist or something.
+# I'll need to test this more to figure it out and see if I can't switch to the faster method
+
+# Until I perfect the second method of re-queueing, I'm keeping the first one as the default uncommented one that gets called 
+# when you use the priority command. I'd recommend just manipulating the queue through the application itself if you really
+# wanna play things before other things. 
