@@ -1,5 +1,8 @@
 import email 
+from email.message import EmailMessage
 import imaplib
+import smtplib
+import ssl
 import yaml
 import time
 import os
@@ -88,8 +91,8 @@ def listen():
     my_mail = imaplib.IMAP4_SSL(imap_url)
     my_mail.login(user, pswd)
     my_mail.select('Inbox') 
-    # _, data = my_mail.search(None, 'ALL')  #Get all emails in account
-    _, data = my_mail.search(None, 'FROM', 'steviemctrash@gmail.com')  #Get all emails in account
+    _, data = my_mail.search(None, 'ALL')  #Get all emails in account
+    # _, data = my_mail.search(None, 'FROM', user)  #Get all emails in account
 
     mail_id_list = data[0].split()  #IDs of all emails that we want to fetch 
 
@@ -134,22 +137,26 @@ def listen():
                                     buffer.put((search_string, command_type, perms))
                                     print('bumping: ' + search_string + ', ' + 'command type: ' + command_type + ', perms: ' + str(perms) + ', by :' + address)  
                                     t.start_track_timer(address)
+                                    response_email(address)
                                     continue
 
                             elif (command_type == 'album' or command_type == 'playlist'):
                                 if album_time != None: 
                                     print(address + " is still on an album/playlist cooldown.") 
+                                    response_email(address)
                                     continue 
                                 else:
                                     buffer.put((search_string, command_type, perms))
                                     print('bumping: ' + search_string + ', ' + 'command type: ' + command_type + ', perms: ' + str(perms) + ', by :' + address)  
                                     t.start_album_timer(address)
+                                    response_email(address)
                                     continue
 
 
                         # And if its a superusers, just queue the command in the buffer with no cooldown checks 
                         buffer.put((search_string, command_type, perms))
                         print('bumping: ' + search_string + ', ' + 'command type: ' + command_type + ', perms: ' + str(perms) + ', by :' + address)  
+                        response_email(address)
 
     # Sets the "to be deleted" flag on all emails that go through, setting up the expunge to later clear out the account, 
     # and filtering emails that have already been read once by removing them from the "inbox" mailbox 
@@ -222,3 +229,16 @@ def read_emails():
             x.join()
             flush_flag = True
             break
+
+def response_email(address):
+    context = ssl.create_default_context()
+    em = EmailMessage()
+    em['From'] = user
+    em['To'] = address
+    em['Subject'] = "Command Successfully Submitted!"
+    em.set_content("Command Successfully Submitted!")
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
+        smtp.login(user, pswd)
+        smtp.sendmail(user, address,em.as_string())
+
+

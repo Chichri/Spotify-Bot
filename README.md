@@ -102,8 +102,8 @@ You can start the script by running:
 python bump-bot
 ``` 
 In the cloned repository folder. Alternatively, the bump-bot script is an executable with a shebang, so if 
-the shebang works with your machine and add this folder to your $PATH, you'll be able to run bump-bot as a 
-command on the terminal anywhere. 
+the shebang works with your machine and you add this folder to your $PATH, you'll be able to run bump-bot 
+as a command on the terminal anywhere. 
 
 Starting the script prompts you with a simple tui with two options.
 ```
