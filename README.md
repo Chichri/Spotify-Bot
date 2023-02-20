@@ -73,13 +73,13 @@ password: "app-passowrd-here"
 where "gmail-account-here" is replaced with the gmail account, and "app-password-here" is replaced with the 
 app password.
 
-### Install IMAP4 and Tekore
+### Install IMAP and Tekore
 
 If you haven't already, 
 
 `pip install tekore`
 and
-`pip install imap4`
+`pip install imap-tools`
 
 [Tekore docs](https://tekore.readthedocs.io/en/stable/index.html)
 [imaplib docs](https://docs.python.org/3/library/imaplib.html)
@@ -150,15 +150,15 @@ The third line is an example of a command that queues a playlist (searched from 
 command carries the suffix "p", and 'playlist' in this case replaces the search string, which is what spotify 
 will look for to queue. 
 
+Now, for the superuser commands: 
 
 ```
 bump:pt track;
 bump:pa album; 
 bump:pp playlist;
 ```
-
-So each of these commands would do exactly what their regular counterparts do, but then shuffle around the
-queue so whatever they added gets played immediately instead of whatever came before it.
+Each of these commands does do exactly what their regular counterparts do, but then shuffle they shuffle
+the queue around so whatever they added gets played immediately instead of whatever came before it.
 
 Finally, the superuser commands for playing, pausing, and adjusting the volume of the playback are: 
  
