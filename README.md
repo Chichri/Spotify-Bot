@@ -147,7 +147,7 @@ The second line is an example of a command that queues an album. This command ca
 'album' in this case replaces the search string, which is what spotify will look for to queue. 
 
 The third line is an example of a command that queues a playlist (searched from the user account). This 
-command carries the suffix "p", and 'playlist' in this case replaces the search string, which is what spotify 
+command carries the suffix "p", and 'playlist' in this case replaces the search string, which is what spotify
 will look for to queue. 
 
 Now, for the superuser commands: 
@@ -157,8 +157,8 @@ bump:pt track;
 bump:pa album; 
 bump:pp playlist;
 ```
-Each of these commands does do exactly what their regular counterparts do, but then shuffle they shuffle
-the queue around so whatever they added gets played immediately instead of whatever came before it.
+Each of these commands does exactly what their regular counterparts do, but then shuffle they shuffle the 
+queue around so whatever they added gets played immediately instead of whatever came before it.
 
 Finally, the superuser commands for playing, pausing, and adjusting the volume of the playback are: 
  
@@ -170,7 +170,7 @@ bump:v volume;
 
 The pause and play commands only have a suffix since there's nothing to search for. The volume command uses 
 what would have been the search string as the value for volume. This value has to be a number ranging from 0
-to 100 in representation of the percentage of the volume thats active.
+to 100 in representation of the percentage of the volume that's active.
 
 ---Manual Input---
 
