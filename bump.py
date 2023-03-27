@@ -14,6 +14,9 @@ available_device = get_first_available_device(spotify)
 
 def prioritize(priority_uri): 
 
+
+
+        current_volume = spotify.playback().device.volume_percent
         spotify.playback_volume(0) 
         
         currently_playing_uri = spotify.playback_currently_playing().item.uri
@@ -24,7 +27,7 @@ def prioritize(priority_uri):
             time.sleep(1) 
             currently_playing_uri = spotify.playback_currently_playing().item.uri
             if currently_playing_uri == priority_uri: 
-                spotify.playback_volume(100) 
+                spotify.playback_volume(current_volume) 
                 break 
             else: 
                 spotify.playback_queue_add(currently_playing_uri, device_id=available_device.id)
