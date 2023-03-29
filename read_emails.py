@@ -36,6 +36,11 @@ creds = yaml.load(content, Loader=yaml.FullLoader) # making a yaml object with t
 user, pswd = creds["user"], creds["password"] # Extacting the credentials into variables
 imap_url = 'imap.gmail.com' # Connecting to gmail with ssl
 
+def record(string): 
+    with open("records.txt",'a') as f_obj:
+        f_obj.write(string)
+        f_obj.close()
+
 # TODO: make this not a crime against conditional chaining
 def filter(body):
     lines = body.split('\n') 
@@ -121,6 +126,7 @@ def listen():
                 # This conditional stops unrecognized users from submitting commands
                 if perms == 2: 
                     print("Unregistered address: " + address + " attempted to submit a command")
+                    record("Unregistered address: " + address + " attempted to submit a command\n")
                     continue
 
                 for part in my_msg.walk():  
@@ -132,10 +138,12 @@ def listen():
                             if command_type == 'track':
                                 if track_time != None:
                                     print(address + " is still on a track cooldown.") 
+                                    record(address + " is still on a track cooldown. Search string was: " + search_string + "\n")
                                     continue
                                 else: 
                                     buffer.put((search_string, command_type, perms))
                                     print('bumping: ' + search_string + ', ' + 'command type: ' + command_type + ', perms: ' + str(perms) + ', by :' + address)  
+                                    record('bumping: ' + search_string + ', ' + 'command type: ' + command_type + ', perms: ' + str(perms) + ', by :' + address + "\n")
                                     t.start_track_timer(address)
                                     response_email(address)
                                     continue
@@ -143,11 +151,13 @@ def listen():
                             elif (command_type == 'album' or command_type == 'playlist'):
                                 if album_time != None: 
                                     print(address + " is still on an album/playlist cooldown.") 
+                                    record(address + " is still on an album/playlist cooldown. Search string was: " + search_string + "\n")
                                     response_email(address)
                                     continue 
                                 else:
                                     buffer.put((search_string, command_type, perms))
                                     print('bumping: ' + search_string + ', ' + 'command type: ' + command_type + ', perms: ' + str(perms) + ', by :' + address)  
+                                    record('bumping: ' + search_string + ', ' + 'command type: ' + command_type + ', perms: ' + str(perms) + ', by :' + address + "\n")
                                     t.start_album_timer(address)
                                     response_email(address)
                                     continue
@@ -156,6 +166,7 @@ def listen():
                         # And if its a superusers, just queue the command in the buffer with no cooldown checks 
                         buffer.put((search_string, command_type, perms))
                         print('bumping: ' + search_string + ', ' + 'command type: ' + command_type + ', perms: ' + str(perms) + ', by :' + address)  
+                        record('bumping: ' + search_string + ', ' + 'command type: ' + command_type + ', perms: ' + str(perms) + ', by :' + address + "\n")
                         response_email(address)
 
     # Sets the "to be deleted" flag on all emails that go through, setting up the expunge to later clear out the account, 
