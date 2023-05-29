@@ -8,7 +8,7 @@ import time
 import os
 import queue
 import threading
-from bump import bump
+from bump import bump, get_name
 from timer import Timer
 
 path = os.path.dirname(os.path.abspath(__file__))
@@ -19,7 +19,6 @@ buffer = queue.Queue()
 with open(path + "/config.yaml") as f_obj:
     content = f_obj.read() 
 
-
 userdic = {}
 with open(path + '/users.txt') as f_obj:
     useraddrs = f_obj.read().splitlines()
@@ -29,10 +28,12 @@ with open(path + '/users.txt') as f_obj:
 # This line makes the timer object used for check cool downs. The last two parameters are the time values
 # for tracks and albums/playlists respectively. If you want to change the cooldown times, change these values
 # to match your desired time in seconds
-t = Timer(userdic, 180, 3600)
+track_timeout = 180
+album_timeout = 3600
+t = Timer(userdic, track_timeout, album_timeout)
 
 creds = yaml.load(content, Loader=yaml.FullLoader) # making a yaml object with the proper credentials 
-user, pswd = creds["user"], creds["password"] # Extacting the credentials into variables
+user, pswd = creds["user"], creds["password"] # Extracting the credentials into variables
 imap_url = 'imap.gmail.com' # Connecting to gmail with ssl
 
 # record prints a command out and also writes it to the records.txt file for posterity / debugging purposes
@@ -42,22 +43,22 @@ def record(string):
         f_obj.write(string + "\n")
         f_obj.close()
 
-#filter is what parses the command type from the content of the command. It reuturns the command type and the 
-#subsequent search string. If it can't find a valid command, then it returns null values instead.
+# filter is what parses the command type from the content of the command. It returns the command type and the 
+# subsequent search string. If it can't find a valid command, then it returns null values instead.
 def filter(body):
     lines = body.split('\n') 
     for line in lines: 
-        #This line finds specifcally a bump and a ; on the same line, returning the parsed command type and
-        #search string in the conditional structure below
+        # This line finds specifically a bump and a ; on the same line, returning the parsed command type and
+        # search string in the conditional structure below
         f = line.find("bump")
         e = line.find(";")
         if f != -1 and e != -1: 
             command = line[f:(e+1)]
-            #Appending a space to the command incase it's a pause or play command, which would fail on the
-            #split with no space in the string
+            # Appending a space to the command in case it's a pause or play command, which would fail on the
+            # split with no space in the string
             command = command + ' '
             bump, search_string = command.split(' ', 1)
-            #every valid command begins with one of these cases
+            # every valid command begins with one of these cases
             match bump:
                 case "bump":
                     return 'track', search_string
@@ -77,7 +78,7 @@ def filter(body):
                     return 'pause', ' '
                 case "bump:play;":
                     return 'play', ' ' 
-    # If no vaild commands were returned in the for loop, return None values
+    # If no valid commands were returned in the for loop, return None values
     return None, None
 
 # whitelist checks to see if the sender is a cleared user for the script, while also checking 
@@ -95,22 +96,23 @@ def whitelist(address):
     else: 
         return 2 
 
-#processCommand parseis the scraped command, invoking the bump command with the correct permissions, in the
+#processCommand parses the scraped command, invoking the bump command with the correct permissions, in the
 #correct mode, etc
 def processCommand(address, perms, command_type, search_string, t):
     # If command_type is none, filter failed to find a validly formatted command from an authorized user.
     # Thus, we notify the user, we don't start a timer since no song is queue, and we return
     if command_type == None: 
         record(address + " submitted an incorrectly formatted command.")
+        reponse_email("Command not accepted", "You didn't submit a properly formatted command. Did you forget the semi-colon?")
         return
 
     # Now, we handle proper commands. If their a user, we need to determine which timer to look for/start and
     # record it properly
     
-    # Firstly we define some strings that get printed out to the terminal / recoreded upon the reception of a
-    # command. We only use one of them on a given command, but I define both in advance for redability. 
-    # cdown concatenates the search string directly in the invocation of record incase it contains a %, which
-    # would mess with the fstring formatting.
+    # Firstly we define some strings that get printed out to the terminal / recorded upon the reception of a
+    # command. cdown concatenates the search string directly in the invocation of record in case it contains 
+    # a %, which would mess with the fstring formatting.
+
     bump_string = "bumping: " + search_string + ", " + "command type: " + command_type + ", perms: " + str(perms) + ", by :" + address
     cdown_string = address + " is still on a %s cooldown. Search string was: "       
     
@@ -122,31 +124,48 @@ def processCommand(address, perms, command_type, search_string, t):
             if command_type == 'track':
                 if track_time != None:
                     record((cdown_string % "track") + search_string)
-                    response_email(address)
+                    # Calculate the approximate time left in minutes
+                    true_time = (track_timeout - (time.perf_counter() - track_time)) // 60
+                    if true_time == 0: 
+                        time_left = "Less then a minute"
+                    else: 
+                        time_left = str(int(true_time)) + " minutes"
+                    response_email(address, "You're still on a track cooldoown", "Time left: " + time_left)
                     return
                 else: 
                     buffer.put((search_string, command_type, perms))
                     record(bump_string)
+                    queued_track, artist = get_name(search_string, 't')
                     t.start_track_timer(address)
-                    response_email(address)
+                    response_email(address, "Command Successfully Submitted!", "Song queued: " + queued_track + ", " + artist)
                     return
 
             elif (command_type == 'album' or command_type == 'playlist'):
                 if album_time != None: 
                     record((cdown_string % "album/playlist") + search_string)
-                    response_email(address)
+                    # Calculate the approximate time left in minutes
+                    true_time = (album_timeout - (time.perf_counter() - album_time)) // 60
+                    if true_time == 0: 
+                        time_left = "Less then a minute"
+                    else: 
+                        time_left = str(int(true_time)) + " minutes"
+                    response_email(address, "You're still on an album/playlist cooldoown", "Time left: " + time_left)
                     return 
                 else:
                     buffer.put((search_string, command_type, perms))
                     record(bump_string)
+                    if command_type == 'album':
+                        queued_album, artist = get_name(search_string, 'a')
+                    else: 
+                        queued_album, artist = (search_string, 'you')
                     t.start_album_timer(address)
-                    response_email(address)
+                    response_email(address, "Command Successfully Submitted!", "Album/playlist queued: " + queued_album + ", " + artist)
                     return
         case 0:
             # And if its a superuser, just queue the command in the buffer with no cooldown checks at all.
             buffer.put((search_string, command_type, perms))
             record(bump_string)
-            response_email(address)
+            response_email(address, "Command Successfully Submitted!", "Command Successfully Submitted!")
 
 # listen is where the email magic happens. Using the imaplib module, we connect to the account, read new emails, and parse them
 def listen(): 
@@ -199,7 +218,7 @@ def listen():
     my_mail.logout()
     time.sleep(3) 
 
-# For manual inputing from the commandline
+# For manual inputting from the commandline
 def manual(): 
     print("Inputting manually... (Enter quit on command type to stop)")
 
@@ -262,13 +281,13 @@ def read_emails():
             flush_flag = True
             break
 
-def response_email(address):
+def response_email(address, subject, content):
     context = ssl.create_default_context()
     em = EmailMessage()
     em['From'] = user
     em['To'] = address
-    em['Subject'] = "Command Successfully Submitted!"
-    em.set_content("Command Successfully Submitted!")
+    em['Subject'] = subject 
+    em.set_content(content)
     with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
         smtp.login(user, pswd)
         smtp.sendmail(user, address,em.as_string())

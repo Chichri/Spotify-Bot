@@ -14,8 +14,6 @@ available_device = get_first_available_device(spotify)
 
 def prioritize(priority_uri): 
 
-
-
         current_volume = spotify.playback().device.volume_percent
         spotify.playback_volume(0) 
         
@@ -45,6 +43,21 @@ def new_prioritize(priority_id):
     for uri in requeue:
         time.sleep(1)
         spotify.playback_queue_add(uri, device_id=available_device.id)
+
+# get_name returns the title of a song/album and it's artist for the sole purpose of being printed out in the
+# response email defined in read_emails. Strictly speaking, bump can do what this function does, but it
+# introduces more complexity to get that information across threads. I think this is simpler. 
+def get_name(search_string, c):
+    match c:
+        case 't':
+            tracks, = spotify.search(query=search_string, limit=NUM_ITEMS)
+            return tracks.items[0].name, tracks.items[0].artists[0].name
+        case 'a':
+            album, = spotify.search(query=search_string,types=('album',),limit=NUM_ITEMS)
+            print(album.items[0].name, album.items[0].artists[0].name)
+            return album.items[0].name, album.items[0].artists[0].name
+
+
 
 def bump(search_string, command_type, perms): 
     #For queueing a song in the regular fashion
