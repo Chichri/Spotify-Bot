@@ -272,6 +272,7 @@ def read_emails():
     global flush_flag
     x = threading.Thread(target=flush)
     x.start()
+    clear_initial_emails(user)
     while True:
         try: 
             listen()
@@ -291,3 +292,18 @@ def response_email(address, subject, content):
     with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
         smtp.login(user, pswd)
         smtp.sendmail(user, address,em.as_string())
+
+#for clearing the account of emails submitted while the bot was off
+def clear_initial_emails(user):
+    my_mail = imaplib.IMAP4_SSL(imap_url)
+    my_mail.login(user, pswd)
+    my_mail.select('Inbox') 
+    _, data = my_mail.search(None, 'ALL')  #Get all emails in account
+
+    mail_id_list = data[0].split()  #IDs of all emails that we want to fetch 
+
+    for num in mail_id_list: 
+        my_mail.store(num, '+FLAGS', '\\Deleted') 
+
+    my_mail.logout()
+
