@@ -291,5 +291,3 @@ def response_email(address, subject, content):
     with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
         smtp.login(user, pswd)
         smtp.sendmail(user, address,em.as_string())
-
-
