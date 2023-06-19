@@ -39,7 +39,7 @@ imap_url = 'imap.gmail.com' # Connecting to gmail with ssl
 # record prints a command out and also writes it to the records.txt file for posterity / debugging purposes
 def record(string): 
     print(string)
-    with open("records.txt",'a') as f_obj:
+    with open(path + "/records.txt",'a') as f_obj:
         f_obj.write(string + "\n")
         f_obj.close()
 
