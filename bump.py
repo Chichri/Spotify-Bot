@@ -9,44 +9,31 @@ NUM_ITEMS = 1
 token = get_user_token()
 spotify = tk.Spotify(token)
 
-#  Find the first available device
+# Find the first available device
 available_device = get_first_available_device(spotify)
 
-def prioritize(priority_uri): 
-
-        current_volume = spotify.playback().device.volume_percent
-        spotify.playback_volume(0) 
-        
+# For shuffling the queue around to play albums in priority.
+def prioritize(priority_uri):
+    current_volume = spotify.playback().device.volume_percent
+    spotify.playback_volume(0) 
+    
+    currently_playing_uri = spotify.playback_currently_playing().item.uri
+    # The sleep call is so that the loop cannot timeout the api with the frequency of requests, which happened a 
+    # couple times in testing
+    while True:
+        spotify.playback_next()
+        time.sleep(1) 
         currently_playing_uri = spotify.playback_currently_playing().item.uri
-        # The sleep call is so that the loop cannot timeout the api with the frequency of requests, which happened a 
-        # couple times in testing
-        while True:
-            spotify.playback_next()
-            time.sleep(1) 
-            currently_playing_uri = spotify.playback_currently_playing().item.uri
-            if currently_playing_uri == priority_uri: 
-                spotify.playback_volume(current_volume) 
-                break 
-            else: 
-                spotify.playback_queue_add(currently_playing_uri, device_id=available_device.id)
-
-# Second approach to playing a song before others in the queue. Currently messes up the gui. 
-def new_prioritize(priority_id): 
-
-    requeue = []
-
-    for fulltrack in spotify.playback_queue().queue: 
-        requeue.append(fulltrack.uri)
-    time.sleep(1)
-    spotify.playback_start_tracks(priority_id, device_id=available_device.id) 
-    time.sleep(1)
-    for uri in requeue:
-        time.sleep(1)
-        spotify.playback_queue_add(uri, device_id=available_device.id)
+        if currently_playing_uri == priority_uri: 
+            spotify.playback_volume(current_volume) 
+            break 
+        else: 
+            spotify.playback_queue_add(currently_playing_uri, device_id=available_device.id)
 
 # get_name returns the title of a song/album and it's artist for the sole purpose of being printed out in the
 # response email defined in read_emails. Strictly speaking, bump can do what this function does, but it
 # introduces more complexity to get that information across threads. I think this is simpler. 
+
 def get_name(search_string, c):
     match c:
         case 't':
@@ -57,26 +44,20 @@ def get_name(search_string, c):
             print(album.items[0].name, album.items[0].artists[0].name)
             return album.items[0].name, album.items[0].artists[0].name
 
-
-
 def bump(search_string, command_type, perms): 
     #For queueing a song in the regular fashion
     if command_type == 'track' or command_type == 'priority-track':
 
         tracks, = spotify.search(query=search_string, limit=NUM_ITEMS)
 
-        spotify.playback_queue_add(tracks.items[0].uri, device_id=available_device.id)
-
         if command_type == "priority-track" and perms == 0:
-            priority_uri = tracks.items[0].uri 
-            prioritize(priority_uri)
+            priority_id = tracks.items[0].id
+            spotify.playback_start_tracks([priority_id], device_id=available_device.id) 
+            
+            # We return early here to avoid queue a song that's already been priority-played
+            return 0
 
-        # The experimental new priority method - commented for now
-        # if command_type == "priority-track" and perms == 0:
-            # priority_id = tracks.items[0].id 
-            # new_prioritize([priority_id])
-        # else: 
-            # spotify.playback_queue_add(tracks.items[0].uri, device_id=available_device.id)
+        spotify.playback_queue_add(tracks.items[0].uri, device_id=available_device.id)
 
         return 0
 
@@ -91,9 +72,8 @@ def bump(search_string, command_type, perms):
             spotify.playback_queue_add(item.uri, device_id=available_device.id)
 
         if command_type == 'priority-album' and perms == 0:
-            priority_uri = tracks.items[0].uri 
+            priority_uri = tracks.items[0].uri
             prioritize(priority_uri)
-
 
         return 0
 
@@ -112,8 +92,9 @@ def bump(search_string, command_type, perms):
                     spotify.playback_queue_add(playlist_track.track.uri)
 
                 if command_type == 'priority-playlist' and perms == 0: 
-                    priority_uri = playlist_items.items[0].track.uri
-                    prioritize(priority_uri)
+                    #This wont work
+                    priority_id = playlist_items.items[0].track.id
+                    prioritize(priority_id)
 
                 return 0
 
@@ -140,6 +121,7 @@ def bump(search_string, command_type, perms):
 
     else:
         print("Submit a valid command")
+
 
 ## Context About This Code ## 
 
@@ -175,3 +157,13 @@ def bump(search_string, command_type, perms):
 # Until I perfect the second method of re-queueing, I'm keeping the first one as the default uncommented one that gets called 
 # when you use the priority command. I'd recommend just manipulating the queue through the application itself if you really
 # wanna play things before other things. 
+
+# UPDATE ON THE PRIORITY FUNCTIONS 
+
+# So it appears that endpoint has changed or I was temporarily blind, but either way it no longer seems to
+# wipe out the queue when you play a song. I was in the middle of writing a way of locally recording what
+# songs were in the queue for a new priority method when I found this. It makes the whole priority thing for
+# tracks vastly easier, since the queue is now preserved. For albums, it'll stay as it is. I still keep my old
+# counsel of using the gui when re-ordering things.
+
+
