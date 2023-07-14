@@ -11,6 +11,10 @@ device = creds["device"]
 
 def get_first_available_device(spotify):
     available_devices = spotify.playback_devices()
+    #Uncomment this for-loop to print the names of available devices on the account 
+    #The device needs to running an active spotify session to show up (a song needs to be playing on it)
+    # for av_device in available_devices: 
+        # print(av_device.name)
 
     # if the device field isn't filled out, we default to checking if the first device is active and available
     if device == None:  
@@ -31,7 +35,7 @@ def get_first_available_device(spotify):
     else: 
 
         if len(available_devices) == 0:
-            print('Your device is not available.\nExiting...')
+            print('No devices available, is ' + device + ' on and running an active spotify session?\nExiting...')
             exit()
 
         for dev in available_devices:

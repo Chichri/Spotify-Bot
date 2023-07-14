@@ -11,13 +11,24 @@ password set. More info on those things bellow.
 
 This script was written for a college dorm situation where people had already been directing the dorm speakers 
 over email, but the process had yet to be automated. It's not intended as a rigorous media solution for larger
-or smaller applications, but with an intermediate understanding of python it can be scaled accordingly. 
+or smaller applications, but with an intermediate understanding of python it can be scaled accordingly. It was
+written, tested, and used on linux systems but it should be able to work on other OS's with the proper python 
+environments.
 
 ## Setup
 
 ### Clone this repository
 
 `git clone https://github.com/Chichri/Spotify-Bot.git`
+
+### Install IMAP and Tekore
+
+`pip install tekore`
+and
+`pip install imap-tools`
+
+[Tekore docs](https://tekore.readthedocs.io/en/stable/index.html)
+[imaplib docs](https://docs.python.org/3/library/imaplib.html)
 
 ### Spotify Account Application
 
@@ -41,8 +52,8 @@ Then add a refresh token to the config file by running
 
 `python get_refresh_token.py`
 
-This will prompt a page in your browser asking for all permission for the bot. Hit accept and save the url it
-redirects to. Go back to the terminal you ran this in and give the url. 
+This will prompt a page in your browser asking for all permissions for the bot. Hit accept, then save the url 
+it will redirect you to. Go back to the terminal you ran this in and give the url. 
 
 You'll then see in your `creds.config` the added line
 
@@ -60,29 +71,27 @@ complete some two-step stuff if you have that enabled. Do that, and finally you'
 can generate the app password. Select "Mail" as the application and "Other (Custom name)" as the device, 
 since we won't be using anything on the provided list. Name the password and click "Generate".
 
-This will produce a page with the app password displayed. Copy it, and do not lose it because you're not 
-seeing it again. 
+This will produce a page with the app password displayed. Copy it, and do not lose it because you can't pull
+it up again after you make it.
 
 Create a file called 'config.yaml' and add the following lines: 
 
 ```
 user: "gmail-account-here"
 password: "app-passowrd-here"
+device: "device-name-here"
 ```
 
 where "gmail-account-here" is replaced with the gmail account, and "app-password-here" is replaced with the 
-app password.
+app password, and "device-name-here" is the name of the device the spotify application is running on. If you
+don't know the name of your device, you can leave that field blank and it will default to trying the first
+available device on your account. If you use your account on many different devices, the first available device 
+might not be the device you actually have the spotify session running on and the script will just exit. 
 
-### Install IMAP and Tekore
-
-If you haven't already, 
-
-`pip install tekore`
-and
-`pip install imap-tools`
-
-[Tekore docs](https://tekore.readthedocs.io/en/stable/index.html)
-[imaplib docs](https://docs.python.org/3/library/imaplib.html)
+To find out the name of the device that you want to be running the spotify session on, go to the 'player.py'
+file and uncomment the two line for-loop at the head of the get_first_available_device function. This will
+print the names of all available devices which are actively running a spotify session when you start the
+script (information starting the script below).
 
 ## Setting Up Users
 
@@ -182,15 +191,24 @@ are from the email commands above. Entering the suffix for the corresponding com
 semicolon present in the email commands (for a track, just enter nothing). You can return to the tui command 
 line by entering 'quit' as the command type or by hitting Ctrl-c. 
 
+## Starting Email mode from the Command Line  
+
+If you run the script with '-e' as an option like so: 
+```
+python bump-bot -e
+``` 
+It'll skip the tui and immediately start listening for emails on the account. This is handy if you want to
+save some keystrokes or if you want to run in the background so that it doesn't take up a whole terminal.
+Remember that even if you run it in the background though, it'll still print output as it catches emails so
+you'll want to redirect the output to /dev/null. In whole, the command looks like this: 
+```
+python bump-bot -e > /dev/null & 
+``` 
 ---
 
 If everything in setup went accordingly, the script should be ready to use. Fire up a spotify session and play 
-a couple seconds of a song to make sure it's really "active" for the script to use. 
-
-The script can be started by running `python bump-bot`. By default, this will trigger the email listening 
-functionality wherein any new emails will be processed for valid commands and fed to the script. If you just 
-want to lest it locally, open up main.py and uncomment the line invoking the "local" function. Running it 
-again will cause a continuous prompt in the terminal for the search_string and the command type. 
+a couple seconds of a song to make sure it's really "active" for the script to use. Then give it a shot by
+emailing the account a command from a registered account. 
 
 ### Credits
 
